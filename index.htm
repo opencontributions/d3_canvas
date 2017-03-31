@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0" />
+    <title>GDAX buy and sell prices</title>
+    <style>
+html{
+    height: 100%;
+}
+body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background-color: #333;
+    color: #aaa;
+    font-family: sans-serif;
+    line-height: 1.5;
+}
+canvas{
+    display: block;
+    margin: 0 auto 10px auto;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+.line_buy {
+    stroke: #e66c45;
+    fill: transparent;
+    stroke-width: 2;
+}
+.fill_buy {
+    fill: rgba(230, 108, 69, .5);
+}
+.horizontal_buy{
+    stroke: rgba(230, 108, 69, .5);
+    stroke-width: .2;
+}
+.line_sell {
+    stroke: #84f766;
+    fill: transparent;
+    stroke-width: 2;
+}
+.fill_sell {
+    fill: rgba(132, 247, 102, .5);
+}
+.horizontal_sell{
+    stroke: rgba(132, 247, 102, .5);
+    stroke-width: .2;
+}
+h1{
+    margin: 10px 0 0 0;
+    padding: 0;
+    font-size: 150%;
+    line-height: 80px;
+}
+h2{
+    margin: 0;
+    padding: 0;
+    font-size: 100%;
+    font-weight: normal;
+}
+.container_header{
+    background-color: #333;
+    padding-bottom: 40px;
+    border-bottom: 1px #222 solid;
+}
+.container_content{
+    
+}
+.content_inner{
+    margin: 0 auto;
+    padding: 0 40px;
+    max-width: 1280px;
+}
+.hr_0{
+
+}
+#container_graph_0{
+    float: left;
+}
+#container_graph_0 div{
+    line-height: 1.5;
+}
+#container_graph_1{
+    float: right;
+}
+#container_graph_1 div{
+    line-height: 1.5;
+}
+.container_graph{
+    margin-top: 20px;
+    width: calc(50% - 20px);
+}
+.container_graph svg{
+    margin-top: 20px;
+}
+@media (max-width: 960px) {
+    #container_graph_0{
+        float: none;
+    }
+    #container_graph_1{
+        float: none;
+    }
+    .container_graph{
+        width: auto;
+    }
+ 
+}
+    </style>
+</head>
+<body>
+<div class="container_content container_header">
+    <div class="content_inner">
+        <h1>GDAX buy and sell prices</h1>
+        <h2>Websocket API wss://ws-feed.gdax.com</h2>
+    </div>
+</div>
+<div class="container_content hr_0">
+    <div class="content_inner">
+        <div id="container_graph_0" class="container_graph">
+            <h2>Buy</h2>
+        </div>
+        <div id="container_graph_1" class="container_graph">
+            <h2>Sell</h2>
+        </div>
+    </div>
+</div>
+<div style="clear: both; height: 40px;"></div>
+<script src="https://d3js.org/d3.v4.min.js"></script>
+<script>
+
+'use strict'
+function d3Canvas(d3, parent, rgb, width, height, cb) {
+    var domainYRange = 1000;
+    var domainYMin = 500;
+    var domainYMax = domainYMin + domainYRange;
+    var domainXMax = 100;
+    var zoomTransform = 1;
+    var avgCurrent = 0;
+    var avgThreshold = 3;
+    var yRange = 100;
+    var domainXInterval = 1;
+    var f = domainXMax + domainXInterval * 2;
+    var i = 0;
+    var i1 = 0;
+
+    var canvas = d3.select(parent).append('canvas')
+        .attr('width', width)
+        .attr('height', height);
+    var ctx = canvas.node().getContext('2d');
+
+    var buffer = {};
+    buffer.data = [];
+
+    var x1 = d3.scaleTime().range([0, width]).domain([0, domainXMax]);
+    var y1 = d3.scaleLinear().range([height, 0]);
+    y1.domain([domainYMin, domainYMax]);
+
+    var line = d3.line()
+        .x(function(d) {
+            return x1(d.time - i1);
+        })
+        .y(function(d) {
+            return parseFloat(y1(d.price).toFixed(4));
+        })
+        .context(ctx);
+    
+    var fill = d3.area()
+        .x(function(d) {
+            return x1(d.time - i1);
+        })
+        .y0(height)
+        .y1(function(d) {
+            return parseFloat(y1(d.price).toFixed(4));
+        })
+        .context(ctx);
+    var yAxis = function() {
+        var ticks = y1.ticks(8);
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(' + rgb.join(', ') + ', .5)';
+        ctx.font = 'normal 16px sans-serif';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = '#ffffff';
+        ctx.lineWidth = 1;
+        ticks.forEach(function(d, i) {
+            if (i === 0 || i === ticks.length - 1) return;
+            ctx.moveTo(0, y1(d));
+            ctx.lineTo(20, y1(d));
+            ctx.moveTo(65, y1(d));
+            ctx.lineTo(width, y1(d));
+            ctx.fillText(d, 60, y1(d));
+            //console.log(ctx.measureText(d).width);
+        });
+        ctx.stroke();
+    };
+    var draw = function() {
+        ctx.clearRect(0, 0, width, height);
+        ctx.beginPath();
+        line(buffer.data);
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = 'rgb(' + rgb.join(', ') + ')';
+        ctx.stroke();
+        ctx.beginPath();
+        fill(buffer.data);
+        ctx.closePath();
+        ctx.lineWidth = 5;
+        ctx.fillStyle = 'rgba(' + rgb.join(', ') + ', .5)';
+        ctx.fill();
+        yAxis();
+    };
+    var avg, avgI, avgL;
+    var update = function(data) {
+        if (typeof data.price === 'undefined' || typeof data.reason === 'undefined') return;
+        buffer.data.push({
+            time: i,
+            price: data.price
+        });
+        i += domainXInterval;
+        if (i >= f) {
+            buffer.data.shift();
+            i1 += domainXInterval;
+        }
+        avg = 0;
+        avgI = 0;
+        avgL = buffer.data.length;
+        for (avgI; avgI < avgL; avgI++) {
+            avg += parseInt(buffer.data[avgI].price, 10);
+        }
+        avg = avg / avgL;
+        if (avgCurrent < avg - avgThreshold || avgCurrent > avg + avgThreshold) {
+            avgCurrent = avg;
+            domainYMin = avg - yRange;
+            domainYMax = avg + yRange;
+            y1.domain([domainYMin + 10 * zoomTransform, domainYMax - 10 * zoomTransform]);
+            if (typeof this.couple !== 'undefined') {
+                this.couple.setZoom = zoomTransform;
+                this.couple.setDomain([domainYMin, domainYMax]);
+                this.couple.y1.domain([domainYMin + 10 * zoomTransform, domainYMax - 10 * zoomTransform]);
+                this.couple.draw();
+            }
+        }
+        draw();
+        cb(data.price, data.reason);
+    };
+    var setZoom = function(transform) {
+        zoomTransform = transform;
+    };
+    var setDomain = function(domain) {
+        domainYMin = domain[0];
+        domainYMax = domain[1];
+    };
+    return {
+        init: function(couple) {
+            if (typeof couple !== 'undefined') {
+                this.couple = couple;
+            }
+            this.canvas = canvas;
+            this.canvas.call(d3.zoom().scaleExtent([1, 100])
+                .on('zoom', this.zoom.bind(this)));
+            draw();
+        },
+        update: function(data) {
+            update.call(this, data);
+        },
+        zoom: function() {
+            if (domainYMax - 10 * d3.event.transform.k < domainYMin + 10 * d3.event.transform.k) {
+                d3.event.transform.k = zoomTransform;
+                return;
+            }
+            zoomTransform = d3.event.transform.k;
+            y1.domain([domainYMin + 10 * zoomTransform, domainYMax - 10 * zoomTransform]);
+            if (typeof this.couple !== 'undefined') {
+                this.couple.setZoom = zoomTransform;
+                this.couple.y1.domain([domainYMin + 10 * zoomTransform, domainYMax - 10 * zoomTransform]);
+                this.couple.draw();
+            }
+            draw();
+        },
+        y1: y1,
+        setZoom: setZoom,
+        setDomain: setDomain,
+        draw: draw
+    };
+}
+var stop = false;
+var can0 = d3Canvas(d3, '#container_graph_0', [142, 214, 255], 640, 480, function(price, reason) {
+    if (stop == true) return;
+	output0.insertBefore(rows0[n - 1], rows0[0]);
+    rows0.unshift(rows0.pop());
+    rows0[0].innerHTML = price + ' ' + reason;
+});
+var can1 = d3Canvas(d3, '#container_graph_1', [132, 247, 102], 640, 480, function(price, reason) {
+    if (stop == true) return;
+	output1.insertBefore(rows1[n - 1], rows1[0]);
+    rows1.unshift(rows1.pop());
+    rows1[0].innerHTML = price + ' ' + reason;
+});
+
+var output0 = document.createElement('div');
+var output1 = document.createElement('div');
+document.getElementById('container_graph_0').appendChild(output0);
+document.getElementById('container_graph_1').appendChild(output1);
+
+var rows0 = [];
+var rows1 = [];
+var n = 5;
+for (var i = 0; i < n; i++) {
+	rows0.push(document.createElement('div'));
+    output0.appendChild(rows0[i]);
+}
+for (var i = 0; i < n; i++) {
+	rows1.push(document.createElement('div'));
+    output1.appendChild(rows1[i]);
+}
+can0.init(can1);
+can1.init(can0);
+
+var ws = new WebSocket('wss://ws-feed.gdax.com');
+var messageJSON, message = ['0'];
+ws.onmessage = function (e) {
+    message = e.data;
+};
+ws.onopen = function(e) {
+   ws.send('{"type": "subscribe","product_id": "BTC-USD"}');
+};
+var loop = function() {
+    messageJSON = JSON.parse(message);
+    if (messageJSON.type === 'done' && messageJSON.side === 'buy') {
+        can0.update(messageJSON);
+    }
+    if (messageJSON.type === 'done' && messageJSON.side === 'sell') {
+        can1.update(messageJSON);
+    }
+    requestAnimationFrame(loop);
+};
+loop();
+</script> 
+</body>
+</html>
