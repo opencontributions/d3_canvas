@@ -57,7 +57,7 @@ function d3Canvas(d3, parent, rgb, width, height) {
             ctx.lineTo(20, y1(d));
             ctx.moveTo(65, y1(d));
             ctx.lineTo(width, y1(d));
-            ctx.fillText(d, 60, y1(d));
+            ctx.fillText(parseInt(d, 10), 60, y1(d));
         });
         ctx.stroke();
     };
@@ -139,7 +139,7 @@ function d3Canvas(d3, parent, rgb, width, height) {
             update.call(this, y);
         },
         zoom: function() {
-            if (this.domainYMax - 10 * d3.event.transform.k < this.domainYMin + 10 * d3.event.transform.k) {
+            if (d3.event.transform.k > 15) {
                 d3.event.transform.k = this.zoomTransform;
                 return;
             }
