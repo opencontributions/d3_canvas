@@ -1,0 +1,117 @@
+html{
+    height: 100%;
+}
+body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background-color: #0f6dc4;
+    color: #fafafa;
+    font-family: sans-serif;
+    line-height: 1.5;
+}
+canvas{
+    display: block;
+    margin: 0 auto 10px auto;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+.line_buy {
+    stroke: #e66c45;
+    fill: transparent;
+    stroke-width: 2;
+}
+.fill_buy {
+    fill: rgba(230, 108, 69, .5);
+}
+.horizontal_buy{
+    stroke: rgba(230, 108, 69, .5);
+    stroke-width: .2;
+}
+.line_sell {
+    stroke: #84f766;
+    fill: transparent;
+    stroke-width: 2;
+}
+.fill_sell {
+    fill: rgba(132, 247, 102, .5);
+}
+.horizontal_sell{
+    stroke: rgba(132, 247, 102, .5);
+    stroke-width: .2;
+}
+h1{
+    margin: 0 0 10px 0;
+    padding: 0;
+    font-size: 150%;
+}
+h2{
+    margin: 0;
+    padding: 0;
+    font-size: 100%;
+    font-weight: normal;
+}
+.github{
+    position: fixed;
+    top: -15px;
+    right: -35px;
+    width: 100px;
+    height: 60px;
+    transform: rotate(45deg);
+    background-color: #c93f26;
+}
+.github svg {
+    position: absolute;
+    bottom: 0;
+    left: calc(50% - 16px);
+}
+.github svg path{
+    fill: #fff;
+}
+.container_header{
+    padding-top: 40px;
+    padding-bottom: 20px;
+}
+.container_content{
+    
+}
+.content_inner{
+    margin: 0 auto;
+    padding: 0 40px;
+    max-width: 1280px;
+}
+.hr_0{
+
+}
+#container_graph_0{
+    float: left;
+}
+#container_graph_0 div{
+    line-height: 1.5;
+}
+#container_graph_1{
+    float: right;
+}
+#container_graph_1 div{
+    line-height: 1.5;
+}
+.container_graph{
+    margin-top: 20px;
+    width: calc(50% - 20px);
+}
+.container_graph svg{
+    margin-top: 20px;
+}
+@media (max-width: 960px) {
+    #container_graph_0{
+        float: none;
+    }
+    #container_graph_1{
+        float: none;
+    }
+    .container_graph{
+        width: auto;
+    }
+ 
+}
