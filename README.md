@@ -1,5 +1,5 @@
-## D3 v4 Graphing demo
-### A real-time graphing demo using [D3](https://d3js.org/) v4. and canvas elements
+# D3 v4 graphing demo
+## A real-time graphing demo using [D3](https://d3js.org/) v4 and canvas elements
 
 View the [demo](https://opencontributions.github.io/btc_gdax/)
 
