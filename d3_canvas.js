@@ -1,16 +1,14 @@
-function d3Canvas(d3, parent, rgb, width, height, cb) {
+function d3Canvas(d3, parent, rgb, width, height) {
     'use strict';
-    var domainYRange = 1000;
-    var domainYMin = 500;
-    var domainYMax = domainYMin + domainYRange;
-    var domainXMax = 100;
-    var zoomTransform = 1;
+
+    var yScale = 200;
+
     var avgCurrent = 0;
     var avgThreshold = 3;
-    var yRange = 100;
     var domainXInterval = 1;
-    var f = domainXMax + domainXInterval * 2;
-    var i = 0;
+
+    var f;
+    var time = 0;
     var i1 = 0;
 
     var canvas = d3.select(parent).append('canvas')
@@ -21,16 +19,15 @@ function d3Canvas(d3, parent, rgb, width, height, cb) {
     var buffer = {};
     buffer.data = [];
 
-    var x1 = d3.scaleTime().range([0, width]).domain([0, domainXMax]);
+    var x1;
     var y1 = d3.scaleLinear().range([height, 0]);
-    y1.domain([domainYMin, domainYMax]);
 
     var line = d3.line()
         .x(function(d) {
             return x1(d.time - i1);
         })
         .y(function(d) {
-            return parseFloat(y1(d.price).toFixed(4));
+            return parseFloat(y1(d.y).toFixed(4));
         })
         .context(ctx);
     
@@ -40,10 +37,12 @@ function d3Canvas(d3, parent, rgb, width, height, cb) {
         })
         .y0(height)
         .y1(function(d) {
-            return parseFloat(y1(d.price).toFixed(4));
+            return parseFloat(y1(d.y).toFixed(4));
         })
         .context(ctx);
+
     var yAxis = function() {
+
         var ticks = y1.ticks(8);
         ctx.beginPath();
         ctx.strokeStyle = 'rgba(' + rgb.join(', ') + ', .5)';
@@ -78,14 +77,14 @@ function d3Canvas(d3, parent, rgb, width, height, cb) {
         yAxis();
     };
     var avg, avgI, avgL;
-    var update = function(data) {
-        if (typeof data.price === 'undefined' || typeof data.reason === 'undefined') return;
+
+    var update = function(y) {
         buffer.data.push({
-            time: i,
-            price: data.price
+            time: time,
+            y: y
         });
-        i += domainXInterval;
-        if (i >= f) {
+        time += domainXInterval;
+        if (time >= f) {
             buffer.data.shift();
             i1 += domainXInterval;
         }
@@ -93,57 +92,62 @@ function d3Canvas(d3, parent, rgb, width, height, cb) {
         avgI = 0;
         avgL = buffer.data.length;
         for (avgI; avgI < avgL; avgI++) {
-            avg += parseInt(buffer.data[avgI].price, 10);
+            avg += parseInt(buffer.data[avgI].y, 10);
         }
         avg = avg / avgL;
         if (avgCurrent < avg - avgThreshold || avgCurrent > avg + avgThreshold) {
             avgCurrent = avg;
-            domainYMin = avg - yRange;
-            domainYMax = avg + yRange;
-            y1.domain([domainYMin + 10 * zoomTransform, domainYMax - 10 * zoomTransform]);
-            if (typeof this.couple !== 'undefined') {
-                this.couple.setZoom = zoomTransform;
-                this.couple.setDomain([domainYMin, domainYMax]);
-                this.couple.y1.domain([domainYMin + 10 * zoomTransform, domainYMax - 10 * zoomTransform]);
-                this.couple.draw();
-            }
+            this.domainYMin = avg - yScale;
+            this.domainYMax = avg + yScale;
+            y1.domain([this.domainYMin + 10 * this.zoomTransform, this.domainYMax - 10 * this.zoomTransform]);
+            this.cb();
         }
+        
+        
         draw();
-        cb(data.price, data.reason);
     };
     var setZoom = function(transform) {
-        zoomTransform = transform;
+        this.zoomTransform = transform;
     };
     var setDomain = function(domain) {
-        domainYMin = domain[0];
-        domainYMax = domain[1];
+        this.domainYMin = domain[0];
+        this.domainYMax = domain[1];
     };
     return {
-        init: function(couple) {
-            if (typeof couple !== 'undefined') {
-                this.couple = couple;
+        init: function(domainYMin, domainYRange, domainXMax, cb) {
+            if (typeof cb !== 'undefined') {
+                this.cb = cb;
             }
             this.canvas = canvas;
+            this.zoomTransform = 1;
+
+            this.domainYMin = domainYMin;
+            this.domainYRange = domainYRange;
+            this.domainYMax = this.domainYMin + this.domainYRange;
+
+            this.domainXMax = domainXMax;
+
+            y1.domain([this.domainYMin, this.domainYMax]);
+            x1 = d3.scaleTime().range([0, width]).domain([0, domainXMax]);
+
+            f = this.domainXMax + domainXInterval * 2;
             this.canvas.call(d3.zoom().scaleExtent([1, 100])
                 .on('zoom', this.zoom.bind(this)));
             draw();
         },
-        update: function(data) {
-            update.call(this, data);
+        update: function(y) {
+            update.call(this, y);
         },
         zoom: function() {
-            if (domainYMax - 10 * d3.event.transform.k < domainYMin + 10 * d3.event.transform.k) {
-                d3.event.transform.k = zoomTransform;
+            if (this.domainYMax - 10 * d3.event.transform.k < this.domainYMin + 10 * d3.event.transform.k) {
+                d3.event.transform.k = this.zoomTransform;
                 return;
             }
-            zoomTransform = d3.event.transform.k;
-            y1.domain([domainYMin + 10 * zoomTransform, domainYMax - 10 * zoomTransform]);
-            if (typeof this.couple !== 'undefined') {
-                this.couple.setZoom = zoomTransform;
-                this.couple.y1.domain([domainYMin + 10 * zoomTransform, domainYMax - 10 * zoomTransform]);
-                this.couple.draw();
-            }
+            this.zoomTransform = d3.event.transform.k;
+            y1.domain([this.domainYMin + 10 * this.zoomTransform, this.domainYMax - 10 * this.zoomTransform]);
+            this.cb();
             draw();
+            
         },
         y1: y1,
         setZoom: setZoom,
