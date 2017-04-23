@@ -5,7 +5,7 @@ View the [demo](https://opencontributions.github.io/d3_canvas/)
 
 ![Alt text](/screenshot.png?raw=true "Screenshot")
 
-Demo graphs show bitcoin buy and sell prices from GDAX websocket API wss://ws-feed.gdax.com).  Y-axis domain and zoom levels adapt to fit data.
+Demo graphs show bitcoin buy and sell prices from GDAX websocket API wss://ws-feed.gdax.com).  Y-axis domain and zoom levels adapt to fit data.  Zoom levels (mouse wheel) are synchronised across elements.
 
 #### Example usage:
 
