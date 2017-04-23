@@ -1,7 +1,7 @@
 # D3 v4 graphing demo
 ## A real-time graphing demo using [D3](https://d3js.org/) v4 and canvas elements
 
-View the [demo](https://opencontributions.github.io/btc_gdax/)
+View the [demo](https://opencontributions.github.io/d3_canvas/)
 
 ![Alt text](/screenshot.png?raw=true "Screenshot")
 
